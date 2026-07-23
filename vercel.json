@@ -3,6 +3,12 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": "web/dist",
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "server/src/assets/**",
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]

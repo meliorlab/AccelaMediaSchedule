@@ -2,6 +2,7 @@
   "name": "media-schedule-builder",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Local app to build media schedules and booking orders and export template-accurate Excel workbooks",
   "workspaces": [
     "shared",
@@ -16,7 +17,7 @@
     "start": "npm --workspace server run start"
   },
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

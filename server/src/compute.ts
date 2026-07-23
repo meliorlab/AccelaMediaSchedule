@@ -36,22 +36,34 @@ export interface Period {
 
 export interface CampaignBundle {
   campaign: Campaign;
+  clientName: string;
   periods: Period[];
   placements: EnrichedPlacement[];
 }
 
-export function getCampaignBundle(campaignId: number): CampaignBundle | null {
-  const campaign = queries.getCampaign(campaignId);
+export async function getCampaignBundle(campaignId: number): Promise<CampaignBundle | null> {
+  const campaign = await queries.getCampaign(campaignId);
   if (!campaign) return null;
 
-  const countries = new Map(queries.listCountries().map((c) => [c.id, c]));
-  const outlets = new Map(queries.listOutlets().map((o) => [o.id, o]));
-  const products = new Map(queries.listProducts().map((p) => [p.id, p]));
+  const [clients, countriesList, outletsList, productsList, placementRows] = await Promise.all([
+    queries.listClients(),
+    queries.listCountries(),
+    queries.listOutlets(),
+    queries.listProducts(),
+    queries.listPlacements(campaignId),
+  ]);
+
+  const countries = new Map(countriesList.map((c) => [c.id, c]));
+  const outlets = new Map(outletsList.map((o) => [o.id, o]));
+  const products = new Map(productsList.map((p) => [p.id, p]));
+  const clientName = clients.find((c) => c.id === campaign.clientId)?.name ?? "";
 
   const periods = buildPeriods(campaign.startDate, campaign.endDate, campaign.gridMode as "daily" | "weekly");
 
-  const placements: EnrichedPlacement[] = queries.listPlacements(campaignId).map((p) => {
-    const flights = queries.listFlights(p.id);
+  const flightsByPlacement = await Promise.all(placementRows.map((p) => queries.listFlights(p.id)));
+
+  const placements: EnrichedPlacement[] = placementRows.map((p, i) => {
+    const flights = flightsByPlacement[i];
     const country = countries.get(p.countryId);
     const outlet = outlets.get(p.outletId);
     const product = p.productId ? products.get(p.productId) : undefined;
@@ -74,7 +86,7 @@ export function getCampaignBundle(campaignId: number): CampaignBundle | null {
     };
   });
 
-  return { campaign, periods, placements };
+  return { campaign, clientName, periods, placements };
 }
 
 /** Group placements by outlet and produce a Booking Order for each. */

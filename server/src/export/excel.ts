@@ -2,7 +2,6 @@ import ExcelJS from "exceljs";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { queries } from "../db.js";
 import {
   buildBookingOrders,
   getCampaignBundle,
@@ -16,7 +15,19 @@ const MONEY_LOCAL = '"$"#,##0.00';
 const MONEY_ACCT = '"$"#,##0.00;"$("#,##0.00")"';
 const INT_FMT = "#,##0";
 
-const ASSETS_DIR = join(dirname(fileURLToPath(import.meta.url)), "assets");
+/**
+ * Locate the bundled logo. Locally the assets sit next to this module; on Vercel
+ * the function is bundled elsewhere but `includeFiles` preserves the source path
+ * relative to the deployment root (process.cwd()). Try both.
+ */
+function resolveLogoPath(): string | null {
+  const candidates = [
+    join(dirname(fileURLToPath(import.meta.url)), "assets", "accela-logo.png"),
+    join(process.cwd(), "server", "src", "assets", "accela-logo.png"),
+    join(process.cwd(), "assets", "accela-logo.png"),
+  ];
+  return candidates.find((p) => existsSync(p)) ?? null;
+}
 
 const COLORS = {
   headerBg: "FF1F3864",
@@ -168,8 +179,8 @@ function renderBrandedHeader(
   opts: { title: string; mediaText: string; countries: string[] },
 ) {
   try {
-    const logoPath = join(ASSETS_DIR, "accela-logo.png");
-    if (existsSync(logoPath)) {
+    const logoPath = resolveLogoPath();
+    if (logoPath) {
       const imgId = wb.addImage({ filename: logoPath, extension: "png" });
       ws.addImage(imgId, { tl: { col: 0, row: 0 }, ext: { width: 170, height: 72 } });
     }
@@ -184,7 +195,7 @@ function renderBrandedHeader(
   title.alignment = { horizontal: "center", vertical: "middle" };
   ws.getRow(1).height = 26;
 
-  const client = queries.listClients().find((c) => c.id === bundle.campaign.clientId);
+  const clientName = bundle.clientName;
   const periodText =
     bundle.campaign.period?.trim() ||
     [formatLongDate(bundle.campaign.startDate), formatLongDate(bundle.campaign.endDate)]
@@ -196,7 +207,7 @@ function renderBrandedHeader(
   const preparedText = bundle.campaign.datePrepared ? formatLongDate(bundle.campaign.datePrepared) : "";
 
   const metaLeft: [string, string][] = [
-    ["Client:", client?.name ?? ""],
+    ["Client:", clientName],
     ["Campaign:", bundle.campaign.name],
     ["Media Placement:", opts.mediaText],
     ["Country:", joinAnd(opts.countries)],
@@ -533,8 +544,8 @@ function addCostBreakdownTab(wb: ExcelJS.Workbook, bundle: CampaignBundle) {
   const ws = wb.addWorksheet("Cost Breakdown");
 
   try {
-    const logoPath = join(ASSETS_DIR, "accela-logo.png");
-    if (existsSync(logoPath)) {
+    const logoPath = resolveLogoPath();
+    if (logoPath) {
       const imgId = wb.addImage({ filename: logoPath, extension: "png" });
       ws.addImage(imgId, { tl: { col: 0, row: 0 }, ext: { width: 150, height: 63 } });
     }
@@ -887,7 +898,7 @@ function addBookingOrderSheets(wb: ExcelJS.Workbook, bundle: CampaignBundle) {
 
 /** Media placement file: exactly three tabs — Client, Accela, Cost Breakdown. */
 export async function buildCampaignWorkbook(campaignId: number): Promise<ExcelJS.Buffer> {
-  const bundle = getCampaignBundle(campaignId);
+  const bundle = await getCampaignBundle(campaignId);
   if (!bundle) throw new Error("Campaign not found");
 
   const wb = new ExcelJS.Workbook();
@@ -908,7 +919,7 @@ export async function buildCampaignWorkbook(campaignId: number): Promise<ExcelJS
 
 /** Separate booking-orders file: one sheet per media house. */
 export async function buildBookingOrdersWorkbook(campaignId: number): Promise<ExcelJS.Buffer> {
-  const bundle = getCampaignBundle(campaignId);
+  const bundle = await getCampaignBundle(campaignId);
   if (!bundle) throw new Error("Campaign not found");
 
   const wb = new ExcelJS.Workbook();
