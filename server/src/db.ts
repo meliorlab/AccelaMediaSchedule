@@ -15,7 +15,8 @@ import type {
 } from "@msb/shared";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dataDir = join(__dirname, "..", "data");
+// Allow overriding the data location (e.g. a mounted persistent disk on Render/Railway/Fly)
+const dataDir = process.env.DATA_DIR || join(__dirname, "..", "data");
 mkdirSync(dataDir, { recursive: true });
 
 export const db = new DatabaseSync(join(dataDir, "media-schedules.db"));

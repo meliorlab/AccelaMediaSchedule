@@ -58,8 +58,15 @@ export interface CampaignSummary {
   grand: SummaryRow;
 }
 
+/**
+ * Base URL for the API. In dev this is empty so Vite's proxy handles `/api`.
+ * In production (e.g. Vercel) set VITE_API_URL to the deployed backend origin,
+ * e.g. "https://accela-media-api.onrender.com".
+ */
+export const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
 async function req<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
+  const res = await fetch(`${API_BASE}${url}`, {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
@@ -116,8 +123,8 @@ export const api = {
   setFlightsBulk: (placementId: number, cells: { periodKey: string; count: number }[], clearFirst: boolean) =>
     req(`/api/placements/${placementId}/flights/bulk`, { method: "PUT", body: JSON.stringify({ cells, clearFirst }) }),
 
-  exportUrl: (id: number) => `/api/campaigns/${id}/export.xlsx`,
-  bookingOrdersUrl: (id: number) => `/api/campaigns/${id}/booking-orders.xlsx`,
+  exportUrl: (id: number) => `${API_BASE}/api/campaigns/${id}/export.xlsx`,
+  bookingOrdersUrl: (id: number) => `${API_BASE}/api/campaigns/${id}/booking-orders.xlsx`,
 };
 
 export function money(n: number): string {
