@@ -8,6 +8,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Emit the production build to a top-level `public/` folder (Vercel's default
+  // output directory) so no custom outputDirectory config is needed.
+  build: {
+    outDir: resolve(__dirname, "../public"),
+    emptyOutDir: true,
+  },
   resolve: {
     alias: {
       "@shared": resolve(__dirname, "../shared/src"),
