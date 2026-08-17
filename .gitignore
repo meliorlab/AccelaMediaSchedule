@@ -6,3 +6,4 @@ dist/
 server/data/*.db
 server/data/*.db-*
 *.log
+api/_app.mjs
