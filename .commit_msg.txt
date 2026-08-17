@@ -1,0 +1,8 @@
+Switch data layer to Supabase Postgres (pg)
+
+- Replace @libsql/client with the pg driver; connect via DATABASE_URL
+  (Supabase transaction pooler) with SSL and a small pool for serverless
+- Postgres schema with quoted camelCase identifiers to preserve column names
+- Inserts use RETURNING "id"; migrations use ADD COLUMN IF NOT EXISTS;
+  bulk flight upsert runs in a pooled transaction
+- Load .env locally via dotenv; update .env.example for DATABASE_URL

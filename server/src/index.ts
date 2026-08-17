@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { app } from "./app.js";
 
 // Local development entry point. On Vercel the Express app is served by the
