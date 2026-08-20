@@ -19,6 +19,12 @@ export default function App() {
       <main className="flex-1 max-w-[1400px] w-full mx-auto px-6 py-6">
         <Outlet />
       </main>
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="max-w-[1400px] mx-auto px-6 h-12 flex items-center justify-between text-xs text-slate-500">
+          <span>&copy; {new Date().getFullYear()} Accela Media Schedule Builder</span>
+          <span>Powered by Melior Lab</span>
+        </div>
+      </footer>
     </div>
   );
 }
